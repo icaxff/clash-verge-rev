@@ -34,7 +34,7 @@ jobs:
           
           # 运行生成命令，将私钥文件创建在临时目录
           echo "${{ github.event.inputs.key_password }}" | \
-          npx tauri signer generate --password --overwrite "$KEY_PATH"
+          npx tauri signer generate --password "$KEY_PATH"
 
           # 2. 提取公钥 (Pubkey) - 必须添加到 tauri.conf.json
           # 使用 tauri signer pubkey 命令从私钥文件中提取公钥
