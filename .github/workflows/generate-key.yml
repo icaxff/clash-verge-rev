@@ -1,0 +1,68 @@
+name: 🔑 Generate Tauri Signing Keys (DO NOT KEEP)
+
+on:
+  # 仅允许手动触发
+  workflow_dispatch:
+    inputs:
+      key_password:
+        description: 'Set a STRONG password for your private key (REQUIRED)'
+        required: true
+        type: string
+        
+jobs:
+  generate_key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Tauri CLI
+        # 即使没有 Node.js 项目，也使用 npm/npx 安装 Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Generate Key Pair
+        id: generate
+        run: |
+          KEY_PATH="./tauri.key"
+
+          # 1. 运行生成命令，设置密码，并指定输出文件
+          # 使用 'echo' 和管道安全地传递密码给非交互式命令
+          # 注意: 这里的 key 文件是临时的，我们只提取内容
+          echo "::group::Running Tauri Signer Generation"
+          
+          # 运行生成命令，将私钥文件创建在临时目录
+          echo "${{ github.event.inputs.key_password }}" | \
+          npx tauri signer generate --password --overwrite "$KEY_PATH"
+
+          # 2. 提取公钥 (Pubkey) - 必须添加到 tauri.conf.json
+          # 使用 tauri signer pubkey 命令从私钥文件中提取公钥
+          PUBKEY=$(echo "${{ github.event.inputs.key_password }}" | \
+          npx tauri signer pubkey --password "$KEY_PATH")
+
+          # 3. 提取私钥内容 (Private Key) - 必须存储到 Secrets
+          PRIVATE_KEY=$(cat "$KEY_PATH")
+
+          echo "::endgroup::"
+          
+          # -----------------------------------------------------
+          # 🚨 警告：公钥是安全的，可以直接打印
+          # -----------------------------------------------------
+          echo "--- 🔑 GENERATED PUBLIC KEY (PUBKEY) ---"
+          echo "PUBLIC KEY (tauri.conf.json -> pubkey):"
+          echo "$PUBKEY"
+          echo "---------------------------------------"
+
+          # -----------------------------------------------------
+          # 🚨 警告：私钥内容存储为 step output，你可以在日志中查看
+          # -----------------------------------------------------
+          echo "::notice title=ACTION REQUIRED::Copy the following key content and store it immediately into a GitHub Secret named TAURI_SIGNING_PRIVATE_KEY. DO NOT SHARE THIS LOG.::endnotice"
+          echo "PRIVATE_KEY_CONTENT<<EOF" >> $GITHUB_OUTPUT
+          echo "$PRIVATE_KEY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # -----------------------------------------------------
+          # 4. 清理：删除临时文件，防止在 runner 的后续步骤中泄露
+          # -----------------------------------------------------
+          rm "$KEY_PATH"
