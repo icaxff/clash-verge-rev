@@ -128,25 +128,6 @@ export const SystemInfoCard = () => {
     };
   }, [verge?.auto_check_update, dispatchSystemState]);
 
-  // 自动检查更新逻辑
-  useSWR(
-    verge?.auto_check_update ? "checkUpdate" : null,
-    async () => {
-      const now = Date.now();
-      localStorage.setItem("last_check_update", now.toString());
-      dispatchSystemState({
-        type: "set-last-check-update",
-        payload: new Date(now).toLocaleString(),
-      });
-      return await checkUpdate();
-    },
-    {
-      revalidateOnFocus: false,
-      refreshInterval: 24 * 60 * 60 * 1000, // 每天检查一次
-      dedupingInterval: 60 * 60 * 1000, // 1小时内不重复检查
-    },
-  );
-
   // 导航到设置页面
   const goToSettings = useCallback(() => {
     navigate("/settings");
@@ -168,21 +149,6 @@ export const SystemInfoCard = () => {
       installServiceAndRestartCore();
     }
   }, [isSidecarMode, isAdminMode, installServiceAndRestartCore]);
-
-  // 检查更新
-  const onCheckUpdate = useLockFn(async () => {
-    try {
-      const info = await checkUpdate();
-      if (!info?.available) {
-        showNotice("success", t("Currently on the Latest Version"));
-      } else {
-        showNotice("info", t("Update Available"), 2000);
-        goToSettings();
-      }
-    } catch (err: any) {
-      showNotice("error", err.message || err.toString());
-    }
-  });
 
   // 是否启用自启动
   const autoLaunchEnabled = useMemo(
@@ -331,24 +297,6 @@ export const SystemInfoCard = () => {
           >
             {getModeIcon()}
             {getModeText()}
-          </Typography>
-        </Stack>
-        <Divider />
-        <Stack direction="row" justifyContent="space-between">
-          <Typography variant="body2" color="text.secondary">
-            {t("Last Check Update")}
-          </Typography>
-          <Typography
-            variant="body2"
-            fontWeight="medium"
-            onClick={onCheckUpdate}
-            sx={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              "&:hover": { opacity: 0.7 },
-            }}
-          >
-            {systemState.lastCheckUpdate}
           </Typography>
         </Stack>
         <Divider />
