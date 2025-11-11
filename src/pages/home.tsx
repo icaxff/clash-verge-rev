@@ -29,7 +29,6 @@ import { BasePage } from "@/components/base";
 import { ClashModeCard } from "@/components/home/clash-mode-card";
 import { CurrentProxyCard } from "@/components/home/current-proxy-card";
 import { EnhancedCard } from "@/components/home/enhanced-card";
-import { EnhancedTrafficStats } from "@/components/home/enhanced-traffic-stats";
 import { HomeProfileCard } from "@/components/home/home-profile-card";
 import { ProxyTunCard } from "@/components/home/proxy-tun-card";
 import { useProfiles } from "@/hooks/use-profiles";
@@ -63,7 +62,6 @@ interface HomeCardsSettings {
   proxy: boolean;
   network: boolean;
   mode: boolean;
-  traffic: boolean;
   info: boolean;
   clashinfo: boolean;
   systeminfo: boolean;
@@ -154,15 +152,6 @@ const HomeSettingsDialog = ({
           <FormControlLabel
             control={
               <Checkbox
-                checked={cards.traffic || false}
-                onChange={() => handleToggle("traffic")}
-              />
-            }
-            label={t("Traffic Stats Card")}
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
                 checked={cards.test || false}
                 onChange={() => handleToggle("test")}
               />
@@ -228,7 +217,6 @@ const HomePage = () => {
       proxy: true,
       network: true,
       mode: true,
-      traffic: true,
       clashinfo: true,
       systeminfo: true,
       test: true,
@@ -320,17 +308,6 @@ const HomePage = () => {
 
   const nonCriticalCards = useMemo(
     () => [
-      renderCard(
-        "traffic",
-        <EnhancedCard
-          title={t("Traffic Stats")}
-          icon={<SpeedOutlined />}
-          iconColor="secondary"
-        >
-          <EnhancedTrafficStats />
-        </EnhancedCard>,
-        12,
-      ),
       renderCard(
         "test",
         <Suspense fallback={<Skeleton variant="rectangular" height={200} />}>
